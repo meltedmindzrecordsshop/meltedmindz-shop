@@ -1,156 +1,123 @@
-import Image from "next/image";
 import Link from "next/link";
 
-type Product = {
-name: string;
-price: string;
-image: string;
-href: string;
-category: string;
-};
-
-const products: Product[] = [
+const collections = [
 {
-name: "Melted Mindz T-Shirt",
-price: "$30.00",
-image: "/products/melted-mindz-tee.jpg",
-href: "/products/melted-mindz-t-shirt",
-category: "Apparel",
+number: "01",
+category: "Clothing",
+title: "Apparel",
+description:
+"T-shirts, hoodies, and official Melted Mindz Records clothing.",
+href: "/collections/apparel",
 },
 {
-name: "Melted Mindz Hoodie",
-price: "$60.00",
-image: "/products/melted-mindz-hoodie.jpg",
-href: "/products/melted-mindz-hoodie",
-category: "Apparel",
+number: "02",
+category: "Physical Music",
+title: "Vinyl",
+description:
+"Vinyl records, special pressings, limited editions, and collector releases.",
+href: "/vinyl",
+},
+{
+number: "03",
+category: "Physical Releases",
+title: "Music",
+description:
+"CDs, physical releases, special editions, and music collectibles.",
+href: "/collections/music",
+},
+{
+number: "04",
+category: "Extras",
+title: "Accessories",
+description:
+"Hats, bags, collectibles, and other official Melted Mindz accessories.",
+href: "/collections/accessories",
 },
 ];
 
-export default function Home() {
+export default function CollectionsPage() {
 return (
 <main className="min-h-screen bg-black text-white">
 
   {/* HERO */}
 
   <section className="border-b border-white/10">
-    <div className="mx-auto max-w-7xl px-6 py-24 md:px-10 md:py-32">
+    <div className="mx-auto max-w-7xl px-6 py-20 md:px-10 md:py-32">
 
-      <p className="text-xs font-semibold uppercase tracking-[0.35em] text-zinc-500">
+      <p className="text-xs font-semibold uppercase tracking-[0.35em] text-zinc-400">
         Melted Mindz Records
       </p>
 
-      <h1 className="mt-6 max-w-5xl text-6xl font-black uppercase leading-[0.85] tracking-[-0.05em] sm:text-7xl md:text-9xl">
-        Official
-        <br />
-        Merchandise
+      <h1 className="mt-6 text-6xl font-black uppercase leading-[0.9] tracking-tight sm:text-7xl md:text-9xl">
+        Collections
       </h1>
 
-      <p className="mt-8 max-w-xl text-base leading-7 text-zinc-400 md:text-lg">
-        Official merchandise from Melted Mindz Records and the artists
-        who make up our roster.
+      <p className="mt-8 max-w-2xl text-base leading-7 text-zinc-300 md:text-lg">
+        Explore the official Melted Mindz Records store. Shop apparel,
+        vinyl, music, accessories, and exclusive merchandise from the
+        label and its artists.
       </p>
-
-      <a
-        href="#shop"
-        aria-label="Shop Melted Mindz Records merchandise"
-        className="mt-10 inline-flex min-h-[52px] items-center justify-center rounded-md border-2 border-white bg-black px-7 py-4 text-sm font-bold uppercase tracking-[0.12em] text-white transition-none hover:border-white hover:bg-black hover:text-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-black"
-      >
-        Shop Now
-      </a>
 
     </div>
   </section>
 
 
-  {/* SHOP */}
+  {/* COLLECTION GRID */}
 
   <section
-    id="shop"
-    aria-labelledby="shop-heading"
+    aria-labelledby="collections-heading"
     className="mx-auto max-w-7xl px-6 py-20 md:px-10 md:py-28"
   >
 
-    <div className="flex items-end justify-between">
+    <h2 id="collections-heading" className="sr-only">
+      Store Collections
+    </h2>
 
-      <div>
+    <div className="grid gap-5 md:grid-cols-2">
 
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500">
-          Shop
-        </p>
-
-        <h2
-          id="shop-heading"
-          className="mt-3 text-4xl font-black uppercase tracking-tight md:text-6xl"
-        >
-          Latest
-        </h2>
-
-      </div>
-
-      <p className="hidden text-sm text-zinc-400 sm:block">
-        2 Products
-      </p>
-
-    </div>
-
-
-    {/* PRODUCTS */}
-
-    <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2">
-
-      {products.map((product) => (
+      {collections.map((collection) => (
 
         <Link
-          key={product.href}
-          href={product.href}
-          aria-label={`View ${product.name}, ${product.price}`}
-          className="group rounded-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-black"
+          key={collection.href}
+          href={collection.href}
+          aria-label={`Shop ${collection.title}`}
+          className="group relative min-h-[500px] overflow-hidden border-2 border-white/20 bg-zinc-950 p-8 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white focus-visible:ring-offset-4 focus-visible:ring-offset-black md:p-12"
         >
 
-          {/* PRODUCT IMAGE */}
+          <div className="flex h-full flex-col justify-between">
 
-          <div className="relative aspect-square overflow-hidden bg-zinc-900">
+            {/* TOP */}
 
-            <Image
-              src={product.image}
-              alt={product.name}
-              fill
-              priority
-              sizes="(max-width: 640px) 100vw, 50vw"
-              className="object-cover transition-transform duration-700 group-hover:scale-105"
-            />
+            <div className="flex items-start justify-between gap-6">
 
-            <div
-              className="absolute inset-0 bg-black/0 transition-colors duration-500 group-hover:bg-black/20"
-              aria-hidden="true"
-            />
+              <span className="text-xs font-bold uppercase tracking-[0.3em] text-zinc-300">
+                {collection.number}
+              </span>
 
-          </div>
-
-
-          {/* PRODUCT INFORMATION */}
-
-          <div className="mt-5">
-
-            <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-zinc-500">
-              {product.category}
-            </p>
-
-            <div className="mt-2 flex items-center justify-between gap-4">
-
-              <h3 className="text-lg font-bold uppercase tracking-tight">
-                {product.name}
-              </h3>
-
-              <p className="text-sm text-zinc-300">
-                {product.price}
-              </p>
+              <span className="rounded-md border border-white px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-white">
+                Shop →
+              </span>
 
             </div>
 
-            <p className="mt-4 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-400">
-              View Product →
-            </p>
+
+            {/* CONTENT */}
+
+            <div>
+
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-300">
+                {collection.category}
+              </p>
+
+              <h3 className="mt-3 text-5xl font-black uppercase tracking-tight text-white md:text-7xl">
+                {collection.title}
+              </h3>
+
+              <p className="mt-5 max-w-md text-sm leading-7 text-zinc-300">
+                {collection.description}
+              </p>
+
+            </div>
 
           </div>
 
@@ -163,29 +130,25 @@ return (
   </section>
 
 
-  {/* BRAND SECTION */}
+    {/* STORE STATEMENT */}
 
   <section className="border-y border-white/10">
-
-    <div className="mx-auto max-w-7xl px-6 py-24 md:px-10 md:py-32">
+    <div className="mx-auto max-w-7xl px-6 py-20 md:px-10 md:py-28">
 
       <p className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500">
-        Melted Mindz Records
+        Official Store
       </p>
 
-      <h2 className="mt-6 max-w-4xl text-5xl font-black uppercase leading-[0.9] tracking-tight md:text-8xl">
-        Built around
-        <br />
-        the music.
+      <h2 className="mt-5 max-w-5xl text-4xl font-black uppercase leading-tight tracking-tight md:text-6xl">
+        Music. Merchandise. Mindz.
       </h2>
 
-      <p className="mt-8 max-w-xl text-base leading-7 text-zinc-400">
-        Official merchandise inspired by the artists, music, and creative
-        world of Melted Mindz Records.
+      <p className="mt-6 max-w-2xl text-sm leading-7 text-zinc-500 md:text-base">
+        The official home for Melted Mindz Records merchandise and
+        physical releases.
       </p>
 
     </div>
-
   </section>
 
 
@@ -232,6 +195,13 @@ return (
               className="w-fit text-sm text-zinc-400 underline-offset-4 transition-none hover:text-zinc-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black"
             >
               Shop
+            </Link>
+
+            <Link
+              href="/collections"
+              className="w-fit text-sm text-zinc-400 underline-offset-4 transition-none hover:text-zinc-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            >
+              Collections
             </Link>
 
             <Link
