@@ -1,35 +1,46 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { createHash } from "crypto";
+import {
+  getExistingOrderByExternalId,
+  getSyncProductDetail,
+  findVariantBySize,
+  createPrintfulOrder,
+} from "@/lib/printful";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+function getStripe() {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
 
-const PRINTIFY_SHOP_ID = "25437630";
+  if (!secretKey) {
+    throw new Error("STRIPE_SECRET_KEY is not configured.");
+  }
 
-const PRINTIFY_PRODUCTS = {
-  "melted-mindz-t-shirt": {
-    productId: "6a6ed1548ef69e3f3f081405",
-    variants: {
-      S: 73196,
-      M: 73200,
-      L: 73204,
-      XL: 73208,
-    },
-  },
-  "melted-mindz-hoodie": {
-    productId: "6a6ed28205d7787ed60f822f",
-    variants: {
-      S: 32918,
-      M: 32919,
-      L: 32920,
-      XL: 32921,
-    },
-  },
-} as const;
+  return new Stripe(secretKey);
+}
 
-type ProductId = keyof typeof PRINTIFY_PRODUCTS;
-type Size = "S" | "M" | "L" | "XL";
+const VALID_SIZES = [
+  "S",
+  "M",
+  "L",
+  "XL",
+  "2XL",
+  "3XL",
+  "4XL",
+  "5XL",
+] as const;
+
+function getPrintfulExternalId(stripeSessionId: string): string {
+  const hash = createHash("sha256")
+    .update(stripeSessionId)
+    .digest("hex")
+    .slice(0, 24);
+
+  return "mm_" + hash;
+}
 
 export async function POST(request: Request) {
+  const stripe = getStripe();
+
   const signature = request.headers.get("stripe-signature");
 
   if (!signature) {
@@ -85,65 +96,53 @@ export async function POST(request: Request) {
         `Stripe session ${eventSession.id} has not been paid yet.`
       );
 
-      return NextResponse.json({ received: true });
+      return NextResponse.json({
+        received: true,
+      });
     }
 
     const session = await stripe.checkout.sessions.retrieve(
       eventSession.id
     );
 
-    console.log(
-      `Processing paid Stripe Checkout Session ${session.id}`
-    );
+    const printfulExternalId =
+      getPrintfulExternalId(session.id);
 
-    const printifyToken = process.env.PRINTIFY_API_TOKEN;
-
-    if (!printifyToken) {
-      console.error("PRINTIFY_API_TOKEN is missing.");
+    if (!process.env.PRINTFUL_API_TOKEN) {
+      console.error("PRINTFUL_API_TOKEN is missing.");
 
       return NextResponse.json(
-        { error: "Printify API token is missing." },
+        { error: "Printful API token is missing." },
         { status: 500 }
       );
     }
 
-    /*
-     * Check whether this Stripe session already created
-     * a Printify order.
-     */
-    const existingOrderResponse = await fetch(
-      `https://api.printify.com/v1/shops/${PRINTIFY_SHOP_ID}/orders.json?external_id=${encodeURIComponent(
-        session.id
-      )}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${printifyToken}`,
-          "Content-Type": "application/json",
-        },
-        cache: "no-store",
-      }
+    const existingOrder =
+      await getExistingOrderByExternalId(
+        printfulExternalId
+      );
+
+    if (existingOrder) {
+      console.log(
+        `Duplicate Printful order detected for Stripe session ${session.id}.`
+      );
+
+      return NextResponse.json({
+        received: true,
+        duplicate: true,
+        stripeSessionId: session.id,
+        printfulExternalId,
+        printfulOrderId: existingOrder.id,
+      });
+    }
+
+    console.log(
+      `Processing paid Stripe Checkout Session ${session.id}`
     );
 
-    if (existingOrderResponse.ok) {
-      const existingOrderData =
-        await existingOrderResponse.json();
-
-      const existingOrders = existingOrderData?.data || [];
-
-      if (existingOrders.length > 0) {
-        console.log(
-          `Printify order already exists for Stripe session ${session.id}.`
-        );
-
-        return NextResponse.json({
-          received: true,
-          duplicate: true,
-          stripeSessionId: session.id,
-          printifyOrderId: existingOrders[0].id,
-        });
-      }
-    }
+    console.log(
+      `Printful external ID: ${printfulExternalId}`
+    );
 
     const metadata = session.metadata || {};
 
@@ -163,49 +162,63 @@ export async function POST(request: Request) {
       );
 
       return NextResponse.json(
-        { error: "No product information found." },
+        {
+          error: "No product information found.",
+        },
         { status: 400 }
       );
     }
 
-    const lineItems: Array<{
-      productId: string;
-      variantId: number;
+    const printfulItems: Array<{
+      sync_variant_id: number;
       quantity: number;
     }> = [];
 
     for (const index of itemIndexes) {
-      const productId =
-        metadata[`item_${index}_id`] as ProductId;
+      const productKey =
+        metadata[`item_${index}_id`];
+
+      const printfulProductId =
+        metadata[
+          `item_${index}_printful_product_id`
+        ];
 
       const size =
-        metadata[`item_${index}_size`] as Size | undefined;
+        metadata[`item_${index}_size`];
 
       const quantity = Number(
         metadata[`item_${index}_quantity`]
       );
 
-      if (!PRINTIFY_PRODUCTS[productId]) {
-        console.error(
-          `Invalid Printify product: ${productId}`
-        );
-
+      if (!productKey) {
         return NextResponse.json(
-          { error: "Invalid Printify product." },
+          {
+            error: "Invalid product reference.",
+          },
+          { status: 400 }
+        );
+      }
+
+      if (!printfulProductId) {
+        return NextResponse.json(
+          {
+            error:
+              `Missing Printful product ID for ${productKey}.`,
+          },
           { status: 400 }
         );
       }
 
       if (
         !size ||
-        !["S", "M", "L", "XL"].includes(size)
+        !VALID_SIZES.includes(
+          size as (typeof VALID_SIZES)[number]
+        )
       ) {
-        console.error(
-          `Invalid size for ${productId}: ${size}`
-        );
-
         return NextResponse.json(
-          { error: "Invalid product size." },
+          {
+            error: "Invalid product size.",
+          },
           { status: 400 }
         );
       }
@@ -215,50 +228,75 @@ export async function POST(request: Request) {
         quantity < 1 ||
         quantity > 20
       ) {
-        console.error(
-          `Invalid quantity for ${productId}: ${quantity}`
-        );
-
         return NextResponse.json(
-          { error: "Invalid product quantity." },
+          {
+            error: "Invalid product quantity.",
+          },
           { status: 400 }
         );
       }
 
-      const product = PRINTIFY_PRODUCTS[productId];
+      let syncProductDetail;
 
-      const variantId = product.variants[size];
-
-      if (!variantId) {
+      try {
+        syncProductDetail =
+          await getSyncProductDetail(
+            printfulProductId
+          );
+      } catch (error) {
         console.error(
-          `No Printify variant found for ${productId} / ${size}`
+          `Printful product lookup failed for ${printfulProductId}:`,
+          error
         );
 
         return NextResponse.json(
-          { error: "Printify variant not found." },
+          {
+            error:
+              `Invalid Printful product: ${printfulProductId}`,
+            details:
+              error instanceof Error
+                ? error.message
+                : String(error),
+          },
           { status: 400 }
         );
       }
 
-      lineItems.push({
-        productId: product.productId,
-        variantId,
+      const variant =
+        findVariantBySize(
+          syncProductDetail.variants,
+          size
+        );
+
+      if (!variant) {
+        console.error(
+          `No Printful variant found for ${printfulProductId} / ${size}`
+        );
+
+        return NextResponse.json(
+          {
+            error:
+              "Printful variant not found.",
+          },
+          { status: 400 }
+        );
+      }
+
+      printfulItems.push({
+        sync_variant_id: variant.id,
         quantity,
       });
+
+      console.log(
+        `Prepared Printful item: ${syncProductDetail.syncProduct.name} / ${size} / quantity ${quantity}`
+      );
     }
 
-    const shippingDetails = session.collected_information?.shipping_details;
+    const shippingDetails =
+      session.collected_information
+        ?.shipping_details;
 
     if (!shippingDetails?.address) {
-      console.error(
-        `No shipping address found for Stripe session ${session.id}.`
-      );
-
-      console.error(
-        "Stripe shipping details:",
-        shippingDetails
-      );
-
       return NextResponse.json(
         {
           error:
@@ -268,100 +306,122 @@ export async function POST(request: Request) {
       );
     }
 
-    const address = shippingDetails.address;
+    const address =
+      shippingDetails.address;
 
-    const fullName = shippingDetails.name || "Customer";
+    const customerEmail =
+      session.customer_details?.email;
 
-    const nameParts = fullName.trim().split(/\s+/);
-
-    const firstName = nameParts[0] || "Customer";
-
-    const lastName =
-      nameParts.length > 1
-        ? nameParts.slice(1).join(" ")
-        : "";
-
-    const printifyItems = lineItems.map((item) => ({
-      product_id: item.productId,
-      variant_id: item.variantId,
-      quantity: item.quantity,
-    }));
-
-    const printifyOrder = {
-      external_id: session.id,
-
-      label: `Melted Mindz Records Order ${session.id}`,
-
-      line_items: printifyItems,
-
-      shipping_method: 1,
-
-      send_shipping_notification: true,
-
-      address_to: {
-        first_name: firstName,
-        last_name: lastName,
-
-        email:
-          session.customer_details?.email || "",
-
-        phone:
-          session.customer_details?.phone || "",
-
-        country: address.country || "US",
-        region: address.state || "",
-        address1: address.line1 || "",
-        address2: address.line2 || "",
-        city: address.city || "",
-        zip: address.postal_code || "",
-      },
-    };
+    if (!customerEmail) {
+      return NextResponse.json(
+        {
+          error:
+            "Customer email is missing from Stripe Checkout Session.",
+        },
+        { status: 400 }
+      );
+    }
 
     console.log(
-      `Creating Printify order for Stripe session ${session.id}`
+      `Creating Printful order for Stripe session ${session.id}`
     );
 
-    const printifyResponse = await fetch(
-      `https://api.printify.com/v1/shops/${PRINTIFY_SHOP_ID}/orders.json`,
-      {
-        method: "POST",
+    let printfulOrder;
 
-        headers: {
-          Authorization: `Bearer ${printifyToken}`,
-          "Content-Type": "application/json",
-        },
+    try {
+      printfulOrder =
+        await createPrintfulOrder({
+          externalId: printfulExternalId,
 
-        body: JSON.stringify(printifyOrder),
+          items: printfulItems,
+
+          recipient: {
+            name:
+              shippingDetails.name ||
+              "Customer",
+
+            email: customerEmail,
+
+            phone:
+              session.customer_details
+                ?.phone || undefined,
+
+            address1:
+              address.line1 || "",
+
+            address2:
+              address.line2 || undefined,
+
+            city:
+              address.city || "",
+
+            state_code:
+              address.state || undefined,
+
+            country_code:
+              address.country || "US",
+
+            zip:
+              address.postal_code || "",
+          },
+        });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : String(error);
+
+      if (
+        errorMessage.includes(
+          "Order with this External ID already exists"
+        ) ||
+        errorMessage.includes("OR-13")
+      ) {
+        console.log(
+          `Duplicate Printful order detected for Stripe session ${session.id}.`
+        );
+
+        const duplicateOrder =
+          await getExistingOrderByExternalId(
+            printfulExternalId
+          );
+
+        return NextResponse.json({
+          received: true,
+          duplicate: true,
+          stripeSessionId: session.id,
+          printfulExternalId,
+          printfulOrderId:
+            duplicateOrder?.id ?? null,
+        });
       }
-    );
 
-    const printifyData = await printifyResponse.json();
-
-    if (!printifyResponse.ok) {
       console.error(
-        "Printify order creation failed:",
-        printifyData
+        "Printful order creation failed:",
+        error
       );
 
       return NextResponse.json(
         {
-          error: "Printify order creation failed.",
-          details: printifyData,
+          error:
+            "Printful order creation failed.",
+          details: errorMessage,
         },
         { status: 500 }
       );
     }
 
     console.log(
-      "Printify order created successfully:",
-      printifyData
+      "Printful order created successfully:",
+      printfulOrder.id
     );
 
     return NextResponse.json({
       received: true,
       duplicate: false,
       stripeSessionId: session.id,
-      printifyOrderId: printifyData.id,
+      printfulExternalId,
+      printfulOrderId: printfulOrder.id,
     });
   } catch (error) {
     console.error(
@@ -370,7 +430,10 @@ export async function POST(request: Request) {
     );
 
     return NextResponse.json(
-      { error: "Webhook processing failed." },
+      {
+        error:
+          "Webhook processing failed.",
+      },
       { status: 500 }
     );
   }
