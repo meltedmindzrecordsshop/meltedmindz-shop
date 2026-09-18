@@ -16,7 +16,9 @@ const sizes = ["S", "M", "L", "XL"];
 
 function handleAddToCart() {
 if (!selectedSize) {
-alert("Please select a hoodie size before adding it to your cart.");
+alert(
+"Please select a hoodie size before adding it to your cart."
+);
 return;
 }
 
@@ -27,7 +29,7 @@ addToCart({
   image: "/products/melted-mindz-hoodie.jpg",
   size: selectedSize,
   quantity,
-  stripePriceId: "price_1U0FSJLl0yEj4MURNt38CsbA",
+  printfulProductId: "6a70766a3ca499",
 });
 
 setAdded(true);
@@ -41,16 +43,11 @@ setTimeout(() => {
 return (
 <main className="min-h-screen bg-black text-white">
 <section className="mx-auto max-w-7xl px-6 py-12 md:px-10 md:py-20">
-
-    <Link
-      href="/#shop"
-      className="inline-flex rounded-sm text-xs font-semibold uppercase tracking-[0.25em] text-zinc-400 underline-offset-4 hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-    >
-      ← Back to Shop
-    </Link>
+<Link href="/#shop" className="inline-flex rounded-sm text-xs font-semibold uppercase tracking-[0.25em] text-zinc-400 underline-offset-4 hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black" >
+← Back to Shop
+</Link>
 
     <div className="mt-10 grid gap-12 lg:grid-cols-2 lg:gap-20">
-
       {/* PRODUCT IMAGE */}
 
       <div className="relative aspect-square overflow-hidden bg-zinc-900">
@@ -67,7 +64,6 @@ return (
       {/* PRODUCT INFORMATION */}
 
       <div className="flex flex-col justify-center">
-
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-400">
           Melted Mindz Records
         </p>
@@ -94,7 +90,6 @@ return (
         {/* SIZE */}
 
         <div className="mt-8">
-
           <p
             id="hoodie-size-label"
             className="text-xs font-semibold uppercase tracking-[0.25em]"
@@ -107,7 +102,6 @@ return (
             role="group"
             aria-labelledby="hoodie-size-label"
           >
-
             {sizes.map((size) => (
               <button
                 key={size}
@@ -123,7 +117,6 @@ return (
                 {size}
               </button>
             ))}
-
           </div>
 
           {selectedSize && (
@@ -134,13 +127,11 @@ return (
               </span>
             </p>
           )}
-
         </div>
 
         {/* QUANTITY */}
 
         <div className="mt-8">
-
           <p
             id="hoodie-quantity-label"
             className="text-xs font-semibold uppercase tracking-[0.25em]"
@@ -152,7 +143,6 @@ return (
             className="mt-4 flex w-fit items-center border-2 border-white/20"
             aria-labelledby="hoodie-quantity-label"
           >
-
             <button
               type="button"
               onClick={() =>
@@ -185,9 +175,7 @@ return (
             >
               +
             </button>
-
           </div>
-
         </div>
 
         {/* ADD TO CART */}
@@ -216,16 +204,15 @@ return (
         {/* DETAILS */}
 
         <div className="mt-10 border-t border-white/10">
-
           <details className="border-b border-white/10 py-5">
             <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.2em]">
               Product Details
             </summary>
 
             <p className="mt-5 text-sm leading-7 text-zinc-400">
-              Official Melted Mindz Records apparel.
-              Product specifications and materials will be added
-              once the final merchandise specifications are confirmed.
+              Official Melted Mindz Records apparel. Product
+              specifications and materials will be added once the final
+              merchandise specifications are confirmed.
             </p>
           </details>
 
@@ -249,9 +236,7 @@ return (
               purchase.
             </p>
           </details>
-
         </div>
-
       </div>
     </div>
   </section>

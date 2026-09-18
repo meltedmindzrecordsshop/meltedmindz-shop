@@ -24,6 +24,13 @@ image: "/products/melted-mindz-hoodie.jpg",
 href: "/products/melted-mindz-hoodie",
 category: "Apparel",
 },
+{
+name: "Melted Mindz Sweatshirt",
+price: "$45.00",
+image: "/products/melted-mindz-sweatshirt.jpg",
+href: "/products/melted-mindz-sweatshirt",
+category: "Apparel",
+},
 ];
 
 export default function Home() {
@@ -88,7 +95,7 @@ return (
       </div>
 
       <p className="hidden text-sm text-zinc-400 sm:block">
-        2 Products
+        3 Products
       </p>
 
     </div>
@@ -96,7 +103,7 @@ return (
 
     {/* PRODUCTS */}
 
-    <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2">
+    <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
 
       {products.map((product) => (
 
@@ -116,7 +123,7 @@ return (
               alt={product.name}
               fill
               priority
-              sizes="(max-width: 640px) 100vw, 50vw"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               className="object-cover transition-transform duration-700 group-hover:scale-105"
             />
 
@@ -196,7 +203,6 @@ return (
     <div className="mx-auto max-w-7xl px-6 py-14 md:px-10">
 
       <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
-
 
         {/* BRAND */}
 

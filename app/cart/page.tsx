@@ -33,9 +33,9 @@ try {
     body: JSON.stringify({
       items: items.map((item) => ({
         id: item.id,
+        printfulProductId: item.printfulProductId,
         quantity: item.quantity,
         size: item.size,
-        stripePriceId: item.stripePriceId,
       })),
     }),
   });
@@ -71,12 +71,10 @@ try {
 
 return (
 <main className="min-h-screen bg-black text-white">
-
-  {/* HERO */}
+{/* HERO */}
 
   <section className="border-b border-white/10">
     <div className="mx-auto max-w-7xl px-6 py-20 md:px-10 md:py-32">
-
       <p className="text-xs font-semibold uppercase tracking-[0.35em] text-zinc-400">
         Melted Mindz Records
       </p>
@@ -92,21 +90,16 @@ return (
             } in your cart.`
           : "Your cart is empty."}
       </p>
-
     </div>
   </section>
-
 
   {/* CART CONTENT */}
 
   <section className="mx-auto max-w-7xl px-6 py-20 md:px-10 md:py-28">
-
     {items.length === 0 ? (
-
       /* EMPTY CART */
 
       <div className="border border-white/10 bg-zinc-950 p-12 text-center">
-
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-zinc-400">
           Nothing here yet
         </p>
@@ -122,28 +115,20 @@ return (
         >
           ← Continue Shopping
         </Link>
-
       </div>
-
     ) : (
-
       <div className="grid gap-10 lg:grid-cols-3">
-
         {/* CART ITEMS */}
 
         <div className="flex flex-col gap-5 lg:col-span-2">
-
           {items.map((item) => (
-
             <article
               key={`${item.id}-${item.size ?? "default"}`}
               className="flex flex-col gap-6 border border-white/10 bg-zinc-950 p-6 sm:flex-row sm:items-center"
             >
-
               {/* PRODUCT IMAGE */}
 
               <div className="relative h-32 w-32 flex-shrink-0 overflow-hidden border border-white/10 bg-zinc-900">
-
                 <Image
                   src={item.image}
                   alt={item.name}
@@ -151,14 +136,11 @@ return (
                   sizes="128px"
                   className="object-cover"
                 />
-
               </div>
-
 
               {/* PRODUCT INFO */}
 
               <div className="flex flex-1 flex-col">
-
                 <h2 className="text-lg font-black uppercase tracking-tight">
                   {item.name}
                 </h2>
@@ -173,7 +155,6 @@ return (
                   ${item.price.toFixed(2)} each
                 </p>
 
-
                 {/* REMOVE */}
 
                 <button
@@ -185,14 +166,11 @@ return (
                 >
                   Remove
                 </button>
-
               </div>
-
 
               {/* QUANTITY */}
 
               <div className="flex items-center gap-3 self-start border-2 border-white/20 px-3 py-2 sm:self-center">
-
                 <button
                   type="button"
                   onClick={() =>
@@ -229,27 +207,20 @@ return (
                 >
                   +
                 </button>
-
               </div>
-
 
               {/* ITEM TOTAL */}
 
               <div className="w-full text-left sm:w-24 sm:text-right">
-
                 <p className="text-sm font-bold">
                   $
                   {(
                     item.price * item.quantity
                   ).toFixed(2)}
                 </p>
-
               </div>
-
             </article>
-
           ))}
-
 
           {/* CLEAR CART */}
 
@@ -260,57 +231,38 @@ return (
           >
             Clear Cart
           </button>
-
         </div>
-
 
         {/* ORDER SUMMARY */}
 
         <aside className="h-fit border border-white/10 bg-zinc-950 p-8">
-
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-400">
             Order Summary
           </p>
 
-
           <div className="mt-6 flex items-center justify-between text-sm text-zinc-300">
-
-            <span>
-              Subtotal
-            </span>
+            <span>Subtotal</span>
 
             <span>
               ${cartTotal.toFixed(2)}
             </span>
-
           </div>
 
-
           <div className="mt-3 flex items-start justify-between gap-6 text-sm text-zinc-400">
-
-            <span>
-              Shipping
-            </span>
+            <span>Shipping</span>
 
             <span className="text-right">
               Calculated at checkout
             </span>
-
           </div>
 
-
           <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-6 text-base font-bold">
-
-            <span>
-              Total
-            </span>
+            <span>Total</span>
 
             <span>
               ${cartTotal.toFixed(2)}
             </span>
-
           </div>
-
 
           {/* CHECKOUT */}
 
@@ -325,7 +277,6 @@ return (
               : "Checkout"}
           </button>
 
-
           {/* CONTINUE SHOPPING */}
 
           <Link
@@ -334,15 +285,10 @@ return (
           >
             Continue Shopping
           </Link>
-
         </aside>
-
       </div>
-
     )}
-
   </section>
-
 </main>
 
 );
